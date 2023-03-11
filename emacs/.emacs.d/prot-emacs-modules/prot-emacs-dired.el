@@ -17,7 +17,9 @@
   ;; In Emacs 29 there is a binding for `repeat-mode' which let you
   ;; repeat C-x C-j just by following it up with j.  For me, this is a
   ;; problem as j calls `dired-goto-file', which I often use.
-  (define-key dired-jump-map (kbd "j") nil))
+  (when (keymapp 'dired-jump-map)
+    (define-key dired-jump-map (kbd "j") nil))
+)
 
 (prot-emacs-builtin-package 'dired-aux
   (setq dired-isearch-filenames 'dwim)

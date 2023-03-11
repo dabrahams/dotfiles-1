@@ -28,6 +28,37 @@
 
 ;;; Code:
 
+(unless (macrop 'setopt)
+;;;###autoload
+  (defmacro setopt (&rest pairs)
+    "Set VARIABLE/VALUE pairs, and return the final VALUE.
+This is like `setq', but is meant for user options instead of
+plain variables.  This means that `setopt' will execute any
+`custom-set' form associated with VARIABLE.
+\(fn [VARIABLE VALUE]...)"
+    (declare (debug setq))
+    (unless (zerop (mod (length pairs) 2))
+      (error "PAIRS must have an even number of variable/value members"))
+    (let ((expr nil))
+      (while pairs
+        (unless (symbolp (car pairs))
+          (error "Attempting to set a non-symbol: %s" (car pairs)))
+        (push `(setopt--set ',(car pairs) ,(cadr pairs))
+              expr)
+        (setq pairs (cddr pairs)))
+      (macroexp-progn (nreverse expr))))
+
+;;;###autoload
+  (defun setopt--set (variable value)
+    (custom-load-symbol variable)
+    ;; Check that the type is correct.
+    ;(when-let ((type (get variable 'custom-type)))
+    ;  (unless (widget-apply (widget-convert type) :match value)
+    ;    (warn "Value `%S' does not match type %s" value type)))
+    (put variable 'custom-check-value (list value))
+    (funcall (or (get variable 'custom-set) #'set-default) variable value)))
+
+
 (defgroup prot-emacs nil
   "User options for my dotemacs."
   :group 'file)
@@ -231,18 +262,18 @@ BODY is the configuration associated with PACKAGE."
   ('standard (require 'prot-emacs-standard-themes)))
 
 (require 'prot-emacs-theme-extras)
-(require 'prot-emacs-font)
-(require 'prot-emacs-modeline)
+;(require 'prot-emacs-font)
+;(require 'prot-emacs-modeline)
 (require 'prot-emacs-completion)
 (require 'prot-emacs-search)
 (require 'prot-emacs-dired)
-(require 'prot-emacs-window)
-(require 'prot-emacs-git)               ; git, diff, and related
+;(require 'prot-emacs-window)
+;(require 'prot-emacs-git)               ; git, diff, and related
 (require 'prot-emacs-shell)             ; e?shell, man, proced, pass
 (require 'prot-emacs-write)             ; denote, logos, etc.
 (require 'prot-emacs-org)               ; org, calendar, appt
-(require 'prot-emacs-langs)
-(require 'prot-emacs-email)
+;(require 'prot-emacs-langs)
+;(require 'prot-emacs-email)
 (when (executable-find "notmuch")
   (require 'prot-emacs-email-notmuch))
 (require 'prot-emacs-web)               ; eww, elfeed, rcirc
